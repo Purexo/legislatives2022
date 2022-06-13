@@ -38,8 +38,9 @@ def row_transformation(row: list):
         candidat.pop(-2)
         candidat = circonscription[0:2] + candidat
 
-        candidat[2] = int(candidat[2], base=10)
-        candidat[7:] = (int(v or '0', base=10) for v in candidat[7:])
+        candidat[2] = int(candidat[2], base=10)  # panneau
+        candidat[7] = int(candidat[7], base=10)  # voix
+        candidat[8] = 1 if candidat[8] else 0  # sieges Elu(e) => 1
 
         candidats.append(candidat)
         candidat_index += candidat_length
@@ -49,9 +50,9 @@ def row_transformation(row: list):
     duel = None
     if candidats[0][-1] == 0:
         majoritaire, minoritaire = candidats[0:2]
-        duel = majoritaire[0:3] + majoritaire[6:1] \
-               + minoritaire[0:3] + minoritaire[6:1] \
-               + majoritaire[7:1] + minoritaire[7:1]
+        duel = majoritaire[0:3] + majoritaire[6:7] \
+               + minoritaire[0:3] + minoritaire[6:7] \
+               + majoritaire[7:8] + minoritaire[7:8]
 
     return departement, circonscription, candidats, duel
 
@@ -84,10 +85,14 @@ def main():
 
             if duel:
                 database.insert_duel(cursor, duel)
-
             cursor.close()
 
+    cursor = db.cursor()
+    database.populate_nuances(cursor)
+    cursor.close()
+
     db.execute('PRAGMA foreign_keys = ON')
+    db.commit()
     db.close()
 
 

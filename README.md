@@ -31,9 +31,3 @@ Un fichier SQLite, découpé en 5 tables.
 - candidats
 - nuances
 - duels
-
-Union des démocrates et des
-écologistes, Les Nouveaux démocrates, Alliance Ecologiste
-Indépendante, Rassemblement citoyen-CAP 21, Génération
-écologie, parti animaliste, autres partis ou candidats
-écologistes

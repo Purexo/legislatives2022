@@ -129,7 +129,7 @@ INSERT OR IGNORE INTO circonscriptions (
 (?,  ?,  ?,  ?,  ?,  ?,  ?,  ?,  ?, ?)
 '''
 QUERY_CANDIDAT = '''
-INSERT OR IGNORE INTO candidats (
+INSERT INTO candidats (
     code_departement,
     code_circonscription,
     numero_panneau,
@@ -145,7 +145,7 @@ INSERT OR IGNORE INTO candidats (
 (?,  ?,  ?,  ?,  ?,  ?,  ?,  ?,  ?)
 '''
 QUERY_DUEL = '''
-INSERT OR IGNORE INTO duels (
+INSERT INTO duels (
     majoritaire_code_departement,
     majoritaire_code_circonscription,
     majoritaire_numero_panneau,
@@ -180,7 +180,6 @@ def insert_departement(cursor: sqlite3.Cursor, departement: list):
 
 
 def insert_circonscription(cursor: sqlite3.Cursor, circonscription: list):
-    print(circonscription)
     cursor.execute(QUERY_CIRCONSCRIPTION, circonscription)
 
 
@@ -190,3 +189,27 @@ def insert_candidat(cursor: sqlite3.Cursor, candidat: list):
 
 def insert_duel(cursor: sqlite3.Cursor, duel: list):
     cursor.execute(QUERY_DUEL, duel)
+
+
+def populate_nuances(cursor: sqlite3.Cursor):
+    cursor.executescript('''
+UPDATE nuances AS n
+SET voix = (SELECT SUM(c.voix) FROM candidats AS c WHERE c.code_nuance = n.code_nuance);
+
+UPDATE nuances AS n
+SET sieges = (SELECT SUM(c.sieges) FROM candidats AS c WHERE c.code_nuance = n.code_nuance);
+
+UPDATE nuances AS n
+SET second_tour = (
+    SELECT COUNT(rowid)
+    FROM duels AS d
+    WHERE
+        d.majoritaire_code_nuance = n.code_nuance
+        OR d.minoritaire_code_nuance = n.code_nuance);
+
+UPDATE nuances AS n
+SET second_tour_majoritaire = (SELECT COUNT(rowid) FROM duels AS d WHERE d.majoritaire_code_nuance = n.code_nuance);
+
+UPDATE nuances AS n
+SET second_tour_minoritaire = (SELECT COUNT(rowid) FROM duels AS d WHERE d.minoritaire_code_nuance = n.code_nuance);
+''')
