@@ -61,7 +61,7 @@ def main():
     db = sqlite3.connect('./resultats-legislatives-premier-tour.sqlite3')
     db.executescript(database.init_schemas())
 
-    with open('nuances.csv', encoding='UTF-8', newline='\n') as csvfile:
+    with open('datasources/nuances.csv', encoding='UTF-8', newline='\n') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=';')
         cursor = db.cursor()
 
@@ -70,7 +70,7 @@ def main():
 
         cursor.close()
 
-    with open('resultats-par-niveau-cirlg-t1-france-entiere.csv', encoding='ISO-8859-1', newline='\r\n') as csvfile:
+    with open('datasources/resultats-par-niveau-cirlg-t1-france-entiere.csv', encoding='ISO-8859-1', newline='\r\n') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=';')
         next(csvreader, None)  # skip row header
 
