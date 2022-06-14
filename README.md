@@ -89,6 +89,10 @@ Un hover / clic pourrait afficher les détails de la circo (comme la liste des r
 
 piste highcharts
 
+- https://www.highcharts.com/demo/parliament-chart (j'espère que ce sera assez souple)
+- https://www.highcharts.com/demo/dependency-wheel (plus adapté pour représenter les duels je penses)
+- https://www.highcharts.com/demo/honeycomb-usa (si on peux répartir les tiles de façon à ce que ça ressemble à un parlement)
+
 <details>
 <summary>Requete SQL</summary>
 
