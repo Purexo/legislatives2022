@@ -93,6 +93,8 @@ piste highcharts
 - https://www.highcharts.com/demo/dependency-wheel (plus adapté pour représenter les duels je penses)
 - https://www.highcharts.com/demo/honeycomb-usa (si on peux répartir les tiles de façon à ce que ça ressemble à un parlement)
 
+exploiter sqlite dans le browser : https://sql.js.org/#/
+
 <details>
 <summary>Requete SQL</summary>
 
