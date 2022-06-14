@@ -2,25 +2,25 @@
 
 - Source des données : https://www.data.gouv.fr/en/datasets/62a6eb8598f12fafcba7ba7c/
 
-Utilisation du fichier `resultats-par-niveau-cirlg-t1-france-entiere.txt` (par circonscription)
+Utilisation du fichier `resultats-par-niveau-cirlg-t1-france-entiere.txt` (par circonscription) que j'ai renommé en csv
 
-c'est du csv avec : 
 - `;` comme séparateur de colonne
 - `CRLF` comme séparateur de ligne
 - `ISO-8859-1` comme encodage caractère
 
 ## Ajouts manuels
 
-- Nuances
+### `nuances.csv`
+
+- `;` comme séparateur de colonne
+- `LF` comme séparateur de ligne
+- `UTF-8` comme encodage caractère
 
 Dans le fichier elles ne sont fournis qu'avec un sigle du ministère, j'y ajoute le label et description
-depuis la source suivante :
+depuis les source suivante :
 
-https://www.legifrance.gouv.fr/download/pdf/circ?id=45336  
-et rationnalisé par  
-https://www.resultats-elections.interieur.gouv.fr/legislatives-2022/nuances.html
-
-j'en ai fait un csv ; LF UTF-8
+- https://www.legifrance.gouv.fr/download/pdf/circ?id=45336
+- https://www.resultats-elections.interieur.gouv.fr/legislatives-2022/nuances.html
 
 ## Résultats
 
@@ -36,9 +36,9 @@ Un fichier SQLite, découpé en 5 tables.
 Le mieux c'est d'ouvrir la base sqlite (avec dbeaver par exemple) et de regarder les tables, leurs structures. 
 J'ai précisé tout ce qui faisait clé primaire, et les liens entre les tables avec les clé étrangères.
 
-Malgrè quelques fonctionnalités manquantes, sqlite permet de faire beaucoup de choses, par exemple,
-pour compenser le manque de `LATERAL JOIN` j'ai utilisé les `WINDOW` pour génerer la table `circonscriptions_consolidees`
-(même si ça aurait été beaucoup plus simple en code)
+Malgré quelques fonctionnalités manquantes, sqlite permet de faire beaucoup de choses, par exemple,
+pour compenser le manque de `LATERAL JOIN` j'ai utilisé les `WINDOW` pour générer la table `circonscriptions_consolidees`
+(même si ça aurait été beaucoup plus simple en code, ça me permet de m'entrainer en SQL au passage)
 
 ## Analyses
 
