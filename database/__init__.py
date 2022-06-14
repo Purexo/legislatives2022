@@ -213,3 +213,62 @@ SET second_tour_majoritaire = (SELECT COUNT(rowid) FROM duels AS d WHERE d.major
 UPDATE nuances AS n
 SET second_tour_minoritaire = (SELECT COUNT(rowid) FROM duels AS d WHERE d.minoritaire_code_nuance = n.code_nuance);
 ''')
+
+
+def consolidate_circonscriptions(cursor: sqlite3.Cursor):
+    cursor.executescript('''
+DROP TABLE IF EXISTS circonscriptions_consolidees;
+CREATE TABLE IF NOT EXISTS circonscriptions_consolidees (
+    code_departement TEXT,
+    code_circonscription INTEGER,
+    majoritaire_numero_panneau INTEGER,
+    majoritaire_voix INTEGER,
+    majoritaire_sieges INTEGER,
+    minoritaire_numero_panneau INTEGER,
+    minoritaire_voix INTEGER,
+    majoritaire_proportion_duel REAL,
+    minoritaire_proportion_duel REAL,
+    
+    PRIMARY KEY (code_departement, code_circonscription),
+    FOREIGN KEY (code_departement) REFERENCES departements(code_departement),
+    FOREIGN KEY (code_departement, code_circonscription) REFERENCES circonscription(code_departement, code_circonscription),
+    FOREIGN KEY (code_departement, code_circonscription, majoritaire_numero_panneau) REFERENCES candidats(code_departement, code_circonscription, numero_panneau),
+    FOREIGN KEY (code_departement, code_circonscription, minoritaire_numero_panneau) REFERENCES candidats(code_departement, code_circonscription, numero_panneau)
+);
+
+INSERT INTO circonscriptions_consolidees (
+    code_departement,
+    code_circonscription,
+    majoritaire_numero_panneau,
+    majoritaire_voix,
+    majoritaire_sieges,
+    minoritaire_numero_panneau,
+    minoritaire_voix,
+    majoritaire_proportion_duel,
+    minoritaire_proportion_duel
+)
+SELECT
+    code_departement,
+    code_circonscription,
+    majoritaire_numero_panneau,
+    majoritaire_voix,
+    majoritaire_sieges,
+    minoritaire_numero_panneau,
+    minoritaire_voix,
+    CAST(majoritaire_voix AS REAL) / (majoritaire_voix + minoritaire_voix) * 100 AS majoritaire_proportion_duel,
+    CAST(minoritaire_voix AS REAL) / (majoritaire_voix + minoritaire_voix) * 100 AS minoritaire_proportion_duel
+FROM (
+    SELECT
+        code_departement,
+        code_circonscription,
+        first_value(numero_panneau) OVER win AS majoritaire_numero_panneau,
+        first_value(voix) OVER win AS majoritaire_voix,
+        first_value(sieges) OVER win AS majoritaire_sieges,
+        nth_value(numero_panneau, 2) OVER win AS minoritaire_numero_panneau,
+        nth_value(voix, 2) OVER win AS minoritaire_voix,
+        ROW_NUMBER() OVER win AS "row_number"
+    FROM candidats
+    WINDOW win AS (PARTITION BY code_departement, code_circonscription ORDER BY voix DESC)
+)
+WHERE "row_number" = 2;
+''')

@@ -86,10 +86,17 @@ def main():
             if duel:
                 database.insert_duel(cursor, duel)
             cursor.close()
+            db.commit()
 
     cursor = db.cursor()
     database.populate_nuances(cursor)
     cursor.close()
+    db.commit()
+
+    cursor = db.cursor()
+    database.consolidate_circonscriptions(cursor)
+    cursor.close()
+    db.commit()
 
     db.execute('PRAGMA foreign_keys = ON')
     db.commit()
