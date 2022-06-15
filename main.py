@@ -58,7 +58,7 @@ def row_transformation(row: list):
 
 
 def main():
-    db = sqlite3.connect('./resultats-legislatives-premier-tour.sqlite3')
+    db = sqlite3.connect('docs/resultats-legislatives-premier-tour.sqlite3')
     db.executescript(database.init_schemas())
 
     with open('datasources/nuances.csv', encoding='UTF-8', newline='\n') as csvfile:
