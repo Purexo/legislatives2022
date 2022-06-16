@@ -7,8 +7,9 @@ SELECT
   -- define x and y by radian angle and radius
   0 AS x,
   1 AS y,
-  -- same size for each points
   1 AS z,
+  1 AS value,
+  -- same size for each points
   c.label_circonscription AS name,
   -- used for compute colors
   json_object(
@@ -60,12 +61,12 @@ ORDER BY n_maj.rowid, cc.majoritaire_proportion_duel
 -- du plus à gauche au plus à droite, puis du plus victorieux au moins victorieux
 `;
 
+
 const series = [];
 let current_serie = null
 let current_serie_identifier = null;
 let current_serie_data = null;
-for (const statement of DB.iterateStatements(CIRCONSCRIPTION_RESULTS)) {
-  const row = statement.getAsObject({}); // Get the row of data
+let stmt = DB.each(CIRCONSCRIPTION_RESULTS, {}, row => {
   row.color = JSON.parse(row.color);
   
   if (row.split_key_series !== current_serie_identifier) {
@@ -89,12 +90,14 @@ for (const statement of DB.iterateStatements(CIRCONSCRIPTION_RESULTS)) {
     current_serie_data = current_serie.data;
   }
   
-  current_serie_data.push(row)
-}
+  current_serie_data.push(row);
+});
+current_serie && series.push(current_serie);
 
 Highcharts.chart('chart-quantique-assemble', {
   chart: {
-    type: 'item'
+    type: 'item',
+    // type: 'packedbubble',
   },
   
   title: {
@@ -113,17 +116,47 @@ Highcharts.chart('chart-quantique-assemble', {
     useHTML: true,
     pointFormatter: (point) => {
       if (point.c_maj_sieges > 0) return `
-      <b>{point.name} :</b> <br/>
-      {point.n_maj_code} <b>{point.c_maj_name}</b> <br/>
-      %exprimés : {point.c_maj_pourcentage_exprimes}
-    `;
+        <b>{point.name} :</b> <br/>
+        {point.n_maj_code} <b>{point.c_maj_name}</b> <br/>
+        %exprimés : {point.c_maj_pourcentage_exprimes}
+      `;
       
       return `
-      <b>{point.name} :</b> <br/>
-      {point.n_maj_code} <b>{point.c_maj_name}</b> - {point.c_maj_pourcentage_exprimes} <br/>
-      Contre
-      {point.n_min_code} <b>{point.c_min_name}</b> - {point.c_min_pourcentage_exprimes} <br/>
-    `;
+        <b>{point.name} :</b> <br/>
+        {point.n_maj_code} <b>{point.c_maj_name}</b> - {point.c_maj_pourcentage_exprimes} <br/>
+        Contre
+        {point.n_min_code} <b>{point.c_min_name}</b> - {point.c_min_pourcentage_exprimes} <br/>
+      `;
+    }
+  },
+  
+  plotOptions: {
+    packedbubble: {
+      minSize: '20%',
+      maxSize: '100%',
+      zMin: 0,
+      zMax: 1000,
+      layoutAlgorithm: {
+        gravitationalConstant: 0.05,
+        splitSeries: true,
+        seriesInteraction: false,
+        dragBetweenSeries: true,
+        parentNodeLimit: true
+      },
+      dataLabels: {
+        enabled: false,
+        format: '{point.name}',
+        filter: {
+          property: 'y',
+          operator: '>',
+          value: 250
+        },
+        style: {
+          color: 'black',
+          textOutline: 'none',
+          fontWeight: 'normal'
+        }
+      }
     }
   },
   
