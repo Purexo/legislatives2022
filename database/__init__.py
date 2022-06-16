@@ -6,6 +6,7 @@ def init_schemas():
 PRAGMA foreign_keys = ON;
 
 DROP TABLE IF EXISTS duels;
+DROP TABLE IF EXISTS circonscriptions_consolidees;
 DROP TABLE IF EXISTS candidats;
 DROP TABLE IF EXISTS nuances;
 DROP TABLE IF EXISTS circonscriptions;
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS nuances (
 
     label_nuance TEXT,
     description_nuance TEXT,
+    color_nuance TEXT,
 
     voix INTEGER,
     sieges INTEGER,
@@ -75,6 +77,24 @@ CREATE TABLE IF NOT EXISTS candidats (
         REFERENCES departements(code_departement),
     FOREIGN KEY (code_nuance)
         REFERENCES nuances(code_nuance)
+);
+
+CREATE TABLE IF NOT EXISTS circonscriptions_consolidees (
+    code_departement TEXT,
+    code_circonscription INTEGER,
+    majoritaire_numero_panneau INTEGER,
+    majoritaire_voix INTEGER,
+    majoritaire_sieges INTEGER,
+    minoritaire_numero_panneau INTEGER,
+    minoritaire_voix INTEGER,
+    majoritaire_proportion_duel REAL,
+    minoritaire_proportion_duel REAL,
+    
+    PRIMARY KEY (code_departement, code_circonscription),
+    FOREIGN KEY (code_departement) REFERENCES departements(code_departement),
+    FOREIGN KEY (code_departement, code_circonscription) REFERENCES circonscription(code_departement, code_circonscription),
+    FOREIGN KEY (code_departement, code_circonscription, majoritaire_numero_panneau) REFERENCES candidats(code_departement, code_circonscription, numero_panneau),
+    FOREIGN KEY (code_departement, code_circonscription, minoritaire_numero_panneau) REFERENCES candidats(code_departement, code_circonscription, numero_panneau)
 );
 
 CREATE TABLE IF NOT EXISTS duels (
@@ -164,10 +184,11 @@ INSERT INTO duels (
 QUERY_NUANCE = '''
 INSERT OR IGNORE INTO nuances (
     code_nuance,
+    color_nuance,
     label_nuance,
     description_nuance
 ) VALUES
-(?, ?, ?)
+(?, ?, ?, ?)
 '''
 
 
@@ -217,25 +238,6 @@ SET second_tour_minoritaire = (SELECT COUNT(rowid) FROM duels AS d WHERE d.minor
 
 def consolidate_circonscriptions(cursor: sqlite3.Cursor):
     cursor.executescript('''
-DROP TABLE IF EXISTS circonscriptions_consolidees;
-CREATE TABLE IF NOT EXISTS circonscriptions_consolidees (
-    code_departement TEXT,
-    code_circonscription INTEGER,
-    majoritaire_numero_panneau INTEGER,
-    majoritaire_voix INTEGER,
-    majoritaire_sieges INTEGER,
-    minoritaire_numero_panneau INTEGER,
-    minoritaire_voix INTEGER,
-    majoritaire_proportion_duel REAL,
-    minoritaire_proportion_duel REAL,
-    
-    PRIMARY KEY (code_departement, code_circonscription),
-    FOREIGN KEY (code_departement) REFERENCES departements(code_departement),
-    FOREIGN KEY (code_departement, code_circonscription) REFERENCES circonscription(code_departement, code_circonscription),
-    FOREIGN KEY (code_departement, code_circonscription, majoritaire_numero_panneau) REFERENCES candidats(code_departement, code_circonscription, numero_panneau),
-    FOREIGN KEY (code_departement, code_circonscription, minoritaire_numero_panneau) REFERENCES candidats(code_departement, code_circonscription, numero_panneau)
-);
-
 INSERT INTO circonscriptions_consolidees (
     code_departement,
     code_circonscription,

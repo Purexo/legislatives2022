@@ -22,6 +22,13 @@ depuis les source suivante :
 - https://www.legifrance.gouv.fr/download/pdf/circ?id=45336
 - https://www.resultats-elections.interieur.gouv.fr/legislatives-2022/nuances.html
 
+Ordonné du plus à gauche au moins à gauche, en essayant d'être objectif, avec ma perception personnelle.
+Donc pour ceux qui voudraient s'appuyer sur le rowid de nuances pour déterminer l'ordre sur l'axe gauche droite
+Et qui ne sont pas d'accord avec mon placement :
+DXG, RDG, NUP, DVG, ECO, DIV, DVC, REG, ENS, UDI, LR, DVD, RN, DSV, REC, DXD
+
+Ordonnez à votre sauce le fichier `datasources/nuances.csv` (vous pouvez aussi changer les couleurs que j'utilise pour les graphiques)
+
 ## Résultats
 
 Un fichier SQLite, découpé en 5 tables.

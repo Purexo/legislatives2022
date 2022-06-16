@@ -1,57 +1,50 @@
-// du plus à gauche au moins à gauche, aussi précis puissent-être les regroupements divers
-const CODE_NUANCES = [
-  'DXG',
-  'RDG',
-  'NUP',
-  'DVG',
-  'ECO',
-  'DIV',
-  'DVC',
-  'ENS',
-  'REG',
-  'DVD',
-  'UDI',
-  'LR',
-  'DSV',
-  'RN',
-  'REC',
-  'DXD',
-];
-// 0 <-> 1
-// gauche <-> droite
-const NUANCES_PRIORITY = new Map(
-  CODE_NUANCES.map((code, index, array) => [code, lerp(0, array.length, index)])
-);
+async function main() {
 
 const DB = await loadDatabase();
-const stmt = DB.prepare(`
+
+const CIRCONSCRIPTION_RESULTS = `
 SELECT
   -- define x and y by radian angle and radius
   0 AS x,
-  0 AS y,
-  1 AS z, -- same size for each points
+  1 AS y,
+  -- same size for each points
+  1 AS z,
   c.label_circonscription AS name,
   -- used for compute colors
-  cc.majoritaire_proportion_duel AS color_maj_proportion,
-  -- TODO cte with color for nuances and join with n_maj and n_min
-  -- AS color_maj
-  -- AS color_min
-
+  json_object(
+    'linearGradient', json_object(
+      'x1', 0,
+      'x2', 0,
+      'y1', 0,
+      'y2', 1
+    ),
+    'stops', json_array(
+      json_array(0, n_maj.color_nuance),
+      json_array(cc.majoritaire_proportion_duel / 100 - 0.0000001, n_maj.color_nuance),
+      json_array(cc.majoritaire_proportion_duel / 100 + 0.0000001, n_min.color_nuance),
+      json_array(0, n_min.color_nuance)
+    )
+  ) AS color,
   -- split info
   n_maj.code_nuance AS split_key_series,
-  n_maj.code_nuance AS n_maj_nuance,
-  n_min.code_nuance AS n_min_nuance,
-  
+  n_maj.code_nuance AS n_maj_code,
+  n_min.code_nuance AS n_min_code,
+  n_maj.label_nuance AS n_maj_label,
+  n_min.label_nuance AS n_min_label,
   -- tooltips info
   c_maj.sieges AS c_maj_sieges,
   c_min.sieges AS c_min_sieges,
   c_maj.nom || ' ' || c_maj.prenom AS c_maj_name,
   c_min.nom || ' ' || c_min.prenom AS c_min_name,
-  CAST(c_maj.voix AS REAL) / c.exprimes * 100 AS c_maj_pourcentage_exprimes,
-  CAST(c_min.voix AS REAL) / c.exprimes * 100 AS c_min_pourcentage_exprimes,
+  CAST(
+      c_maj.voix AS REAL
+  ) / c.exprimes * 100 AS c_maj_pourcentage_exprimes,
+  CAST(
+      c_min.voix AS REAL
+  ) / c.exprimes * 100 AS c_min_pourcentage_exprimes,
   c_maj.voix AS c_maj_voix,
-  c_min.voix AS c_min_voix,
-  FROM circonscriptions_consolidees cc
+  c_min.voix AS c_min_voix
+FROM circonscriptions_consolidees cc
 INNER JOIN circonscriptions c ON cc.rowid = c.rowid
 INNER JOIN candidats c_maj ON
   cc.code_departement = c_maj.code_departement
@@ -63,50 +56,78 @@ INNER JOIN candidats c_min ON
   AND cc.minoritaire_numero_panneau = c_min.numero_panneau
 INNER JOIN nuances n_maj ON c_maj.code_nuance = n_maj.code_nuance
 INNER JOIN nuances n_min ON c_min.code_nuance = n_min.code_nuance
-`);
+ORDER BY n_maj.rowid, cc.majoritaire_proportion_duel
+-- du plus à gauche au plus à droite, puis du plus victorieux au moins victorieux
+`;
 
-
-Highcharts.chart('container', {
+const series = [];
+let current_serie = null
+let current_serie_identifier = null;
+let current_serie_data = null;
+for (const statement of DB.iterateStatements(CIRCONSCRIPTION_RESULTS)) {
+  const row = statement.getAsObject({}); // Get the row of data
+  row.color = JSON.parse(row.color);
   
+  if (row.split_key_series !== current_serie_identifier) {
+    current_serie && series.push(current_serie);
+    
+    current_serie_identifier = row.split_key_series;
+    current_serie = {
+      name: row.n_maj_label,
+      data: [],
+      dataLabels: {
+        enabled: false,
+        format: '{point.label}'
+      },
+      
+      // Circular options
+      center: ['50%', '88%'],
+      size: '170%',
+      startAngle: -100,
+      endAngle: 100
+    };
+    current_serie_data = current_serie.data;
+  }
+  
+  current_serie_data.push(row)
+}
+
+Highcharts.chart('chart-quantique-assemble', {
   chart: {
     type: 'item'
   },
   
   title: {
-    text: 'Highcharts item chart'
+    text: 'Parlement au premier tour'
   },
   
   subtitle: {
-    text: 'Parliament visualization'
+    text: 'une vision quantique'
   },
   
   legend: {
-    labelFormat: '{name} <span style="opacity: 0.4">{y}</span>'
+    labelFormat: '{name}'
   },
   
-  series: [{
-    name: 'Representatives',
-    keys: ['name', 'y', 'color', 'label'],
-    data: [
-      ['The Left', 69, '#BE3075', 'DIE LINKE'],
-      ['Social Democratic Party', 153, '#EB001F', 'SPD'],
-      ['Alliance 90/The Greens', 67, '#64A12D', 'GRÜNE'],
-      ['Free Democratic Party', 80, '#FFED00', 'FDP'],
-      ['Christian Democratic Union', 200, '#000000', 'CDU'],
-      ['Christian Social Union in Bavaria', 46, '#008AC5', 'CSU'],
-      ['Alternative for Germany', 94, '#009EE0', 'AfD']
-    ],
-    dataLabels: {
-      enabled: true,
-      format: '{point.label}'
-    },
-    
-    // Circular options
-    center: ['50%', '88%'],
-    size: '170%',
-    startAngle: -100,
-    endAngle: 100
-  }],
+  tooltip: {
+    useHTML: true,
+    pointFormatter: (point) => {
+      if (point.c_maj_sieges > 0) return `
+      <b>{point.name} :</b> <br/>
+      {point.n_maj_code} <b>{point.c_maj_name}</b> <br/>
+      %exprimés : {point.c_maj_pourcentage_exprimes}
+    `;
+      
+      return `
+      <b>{point.name} :</b> <br/>
+      {point.n_maj_code} <b>{point.c_maj_name}</b> - {point.c_maj_pourcentage_exprimes} <br/>
+      Contre
+      {point.n_min_code} <b>{point.c_min_name}</b> - {point.c_min_pourcentage_exprimes} <br/>
+    `;
+    }
+  },
+  
+  series: series,
   
   responsive: {
     rules: [{
@@ -123,9 +144,12 @@ Highcharts.chart('container', {
     }]
   }
 });
+}
+
+main().catch(console.error)
 
 // --- Hoistings Utils Functions --- //
 
-function lerp(start, end, amt){
-  return (1-amt)*start+amt*end
+function lerp(start, end, amt) {
+  return (1 - amt) * start + amt * end
 }
