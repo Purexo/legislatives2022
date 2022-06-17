@@ -82,7 +82,7 @@ async function main() {
     
       current_serie_identifier = circonscription.split_key_series;
       current_serie = {
-        name: circonscription.n_maj_label,
+        name: `${circonscription.n_maj_code}: ${circonscription.n_maj_label}`,
         color: circonscription.n_maj_color,
         data: [],
       };
@@ -92,6 +92,8 @@ async function main() {
     current_serie_data.push(circonscription);
   }
   current_serie && series.push(current_serie);
+  series.forEach(s => s.name = `${s.name} (${s.data.length})`);
+  series.sort((sa, sb) => sb.data.length - sa.data.length);
   
   Highcharts.chart('chart-quantique-assemble', {
     chart: {
@@ -110,7 +112,7 @@ async function main() {
     },
     
     legend: {
-      enabled: false
+      enabled: true,
     },
 
     xAxis: {
