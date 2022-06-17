@@ -98,7 +98,7 @@ async function main() {
       type: 'bubble',
       plotBorderWidth: 1,
       zoomType: 'xy',
-      height: 800,
+      height: '100%',
     },
     
     title: {
@@ -111,6 +111,15 @@ async function main() {
     
     legend: {
       enabled: false
+    },
+
+    xAxis: {
+        min: -170,
+        max: 170,
+    },
+    yAxis: {
+        min: -170,
+        max: 170,
     },
     
     tooltip: {
