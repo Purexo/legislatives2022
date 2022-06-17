@@ -100,7 +100,7 @@ async function main() {
       type: 'bubble',
       plotBorderWidth: 1,
       zoomType: 'xy',
-      height: '100%',
+//      height: '100%',
     },
     
     title: {
@@ -120,7 +120,7 @@ async function main() {
         max: 170,
     },
     yAxis: {
-        min: -170,
+        min: -100,
         max: 170,
     },
     
@@ -145,7 +145,7 @@ async function main() {
         },
       },
       bubble: {
-        maxSize: '20',
+        maxSize: '10',
       },
     },
     
