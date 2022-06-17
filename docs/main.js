@@ -54,7 +54,7 @@ async function main() {
       AND cc.minoritaire_numero_panneau = c_min.numero_panneau
     INNER JOIN nuances n_maj ON c_maj.code_nuance = n_maj.code_nuance
     INNER JOIN nuances n_min ON c_min.code_nuance = n_min.code_nuance
-    ORDER BY n_maj.rowid, cc.majoritaire_proportion_duel
+    ORDER BY n_maj.rowid, c_maj.sieges DESC, cc.majoritaire_proportion_duel DESC
     -- du plus à gauche au plus à droite, puis du plus victorieux au moins victorieux
   `;
   
@@ -73,6 +73,9 @@ async function main() {
   
   for (const circonscription of circonscriptions) {
     circonscription.z = 1;
+    if (circonscription.c_maj_sieges > 0) {
+      circonscription.className = 'highcharts-siege-obtenu'
+    }
   
     if (circonscription.split_key_series !== current_serie_identifier) {
       current_serie && series.push(current_serie);
@@ -151,7 +154,7 @@ function genCoordinatesOnHemidiscInPlace(array, options = {}) {
   const {
     ox = 0, oy = 0,
     tip_angle = Math.PI / 8,
-    radius_amount = 12,
+    radius_amount = 15,
     radius_start = 10,
     radius_offset = 10,
   } = options;
@@ -162,14 +165,14 @@ function genCoordinatesOnHemidiscInPlace(array, options = {}) {
   { // [ 8, 12, 16, 22, 30, 42, 59, 85, 121, 173 ] for 577 input
     let to_dispatch_on_radiusses = array.length;
     for (let idx = radius_amount - 1; idx >= 0; idx--) {
-      const rangee = Math.floor(
+      const rangee = Math.ceil(
         to_dispatch_on_radiusses / radius_amount * 3
         * (1 + 1 - easeOutQuart((idx + 1) / radius_amount))
       );
       to_dispatch_on_radiusses -= rangee;
       radiusses[idx] = rangee;
     }
-    radiusses[radiusses.length - 1] += to_dispatch_on_radiusses
+    radiusses[Math.ceil(radiusses.length / 2)] += to_dispatch_on_radiusses
   }
 
   const parts = radiusses.map(amount => range_angle / amount)
